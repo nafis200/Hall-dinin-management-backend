@@ -213,7 +213,7 @@ async function run() {
         );
         console.log(paymentUpdateResult);
 
-        res.redirect("http://localhost:5000/success");
+        res.redirect("http://localhost:5173/success");
       } catch (error) {
         console.error("Error during success payment:", error);
         res.status(500).send({ error: "Failed to process payment success" });
@@ -222,7 +222,7 @@ async function run() {
 
     app.post("/failure-payment", async (req, res) => {
       // Failure route: just redirect to the failure page
-      res.redirect("http://localhost:5000/failure"); // Redirect to local failure page
+      res.redirect("http://localhost:5173/failure"); // Redirect to local failure page
     });
 
     app.post("/cancel-payment", async (req, res) => {
