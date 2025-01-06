@@ -198,7 +198,7 @@ async function run() {
 
       try {
         const query = {
-          paymnetId: tran_id,
+          paymentId: tran_id,
         };
         const update = {
           $set: {
@@ -206,7 +206,6 @@ async function run() {
           },
         };
 
-        // No payment status update and mango quantity update
         const paymentUpdateResult = await paymentCollection.updateOne(
           query,
           update
@@ -221,14 +220,33 @@ async function run() {
     });
 
     app.post("/failure-payment", async (req, res) => {
-      // Failure route: just redirect to the failure page
-      res.redirect("http://localhost:5173/failure"); // Redirect to local failure page
+      
+      res.redirect("http://localhost:5173/failure");
     });
 
     app.post("/cancel-payment", async (req, res) => {
-      // Cancel route: handle cancel here if needed
-      res.redirect("http://localhost:5000/cancel"); // Redirect to local cancel page
+      
+      res.redirect("http://localhost:5000/cancel");
     });
+
+    app.get("/find-food-id", async (req, res) => {
+      const { email } = req.query;
+    
+      try {
+        const foodData = await paymentCollection.find({ email: email }).toArray();
+        if (foodData.length > 0) {
+          res.status(200).send({ success: true, foodData });
+        } else {
+          res.status(404).send({ success: false, message: "No records found for the provided email" });
+        }
+      } catch (error) {
+        console.error("Error finding food data by email:", error);
+        res.status(500).send({ success: false, message: "Failed to fetch food data" });
+      }
+    });
+    
+    
+
   } catch (error) {
     console.error("Error connecting to MongoDB:", error);
   }
