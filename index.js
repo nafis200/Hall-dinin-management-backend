@@ -15,6 +15,8 @@ app.use(
       "http://localhost:5173",
       "https://assignment-12-80409.web.app",
       "https://assignment-12-80409.firebaseapp.com",
+      "*",
+      "https://bkash-app-920d1.web.app"
     ],
     credentials: true,
   })
