@@ -45,6 +45,8 @@ async function run() {
     const userCollection = client.db("HallDB").collection("accounts");
     const paymentCollection = client.db("HallDB").collection("payment");
     const FoodCollection = client.db("HallDB").collection("food");
+    const ComplaintCollection = client.db("HallDB").collection("compalin");
+    const noticeCollection = client.db("HallDB").collection("notice")
 
     // Generate JWT Token
     app.post("/jwt", async (req, res) => {
@@ -76,6 +78,43 @@ async function run() {
       }
     });
 
+    app.patch("/users/:id", async (req, res) => {
+      const userId = req.params.id;
+      try {
+          const filter = { _id: new ObjectId(userId) };
+          const updateDoc = {
+              $set: { role: "manager" }
+          };
+  
+          const result = await userCollection.updateOne(filter, updateDoc);
+          if (result.modifiedCount > 0) {
+              res.status(200).send({ success: true, message: "User role updated to manager" });
+          } else {
+              res.status(404).send({ success: false, message: "User not found or already a manager" });
+          }
+      } catch (error) {
+          res.status(500).send({ success: false, message: "Failed to update user role" });
+      }
+  })
+    app.patch("/user/:id", async (req, res) => {
+      const userId = req.params.id;
+      try {
+          const filter = { _id: new ObjectId(userId) };
+          const updateDoc = {
+              $set: { role: "user" }
+          };
+  
+          const result = await userCollection.updateOne(filter, updateDoc);
+          if (result.modifiedCount > 0) {
+              res.status(200).send({ success: true, message: "User role updated to manager" });
+          } else {
+              res.status(404).send({ success: false, message: "User not found or already a manager" });
+          }
+      } catch (error) {
+          res.status(500).send({ success: false, message: "Failed to update user role" });
+      }
+  })
+
     // Add User
     app.post("/users", async (req, res) => {
       try {
@@ -96,7 +135,6 @@ async function run() {
 
     app.post("/food", async (req, res) => {
       const foodData = req.body;
-      console.log(foodData);
       try {
         const result = await FoodCollection.insertOne(foodData);
         res.status(201).send(result);
@@ -166,12 +204,15 @@ async function run() {
           },
         });
 
+        const token = Math.floor(100000 + Math.random() * 900000)
+
         const saveData = {
           paymentId: tranId,
           foodId: user.foodId,
           email: user.email,
           price: parseFloat(user.price),
           status: "pending",
+          token: token
         };
 
         const save = await paymentCollection.insertOne(saveData);
@@ -244,6 +285,76 @@ async function run() {
         res.status(500).send({ success: false, message: "Failed to fetch food data" });
       }
     });
+    app.get("/find-food-payment", async (req, res) => {
+      
+      try {
+        const foodData = await paymentCollection.find().toArray();
+        if (foodData.length > 0) {
+          res.status(200).send({ success: true, foodData });
+        } else {
+          res.status(404).send({ success: false, message: "No records found for the provided email" });
+        }
+      } catch (error) {
+        console.error("Error finding food data by email:", error);
+        res.status(500).send({ success: false, message: "Failed to fetch food data" });
+      }
+    });
+
+  
+
+    // complain
+
+    app.post("/complaints", async (req, res) => {
+      const complaintData = req.body;
+      try {
+        const result = await ComplaintCollection.insertOne(complaintData); // Assuming ComplaintCollection is your MongoDB collection
+        res.status(201).send(result);
+      } catch (error) {
+        console.error("Error inserting data: ", error);
+        res.status(500).send({ message: "Internal Server Error", error });
+      }
+    });
+
+    app.get("/complaints", async (req, res) => {
+      try {
+        // Fetch all complaints from the collection
+        const complaints = await ComplaintCollection.find({}).toArray();
+        res.status(200).send(complaints);
+      } catch (error) {
+        console.error("Error fetching complaints: ", error);
+        res.status(500).send({ message: "Internal Server Error", error });
+      }
+    });
+    
+    // Notice
+
+    app.post("/notice", async (req, res) => {
+      const { notice, date } = req.body;
+    
+      if (!notice || !date) {
+        return res.status(400).json({ message: "All fields are required" });
+      }
+    
+      try {
+        await noticeCollection.insertOne({ notice, date });
+        res.status(201).json({ message: "Notice added successfully" });
+      } catch (error) {
+        console.error("Error saving notice:", error);
+        res.status(500).json({ message: "Error saving notice" });
+      }
+    });
+
+    app.get("/notice", async (req, res) => {
+      try {
+        // Fetch all notices from the database
+        const notices = await noticeCollection.find({}).toArray();
+        res.status(200).json(notices);
+      } catch (error) {
+        console.error("Error fetching notices:", error);
+        res.status(500).json({ message: "Error fetching notices" });
+      }
+    });
+    
     
     
 
